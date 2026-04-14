@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comedor UPTBAL</title>
+    <!-- CSS -->
+    <link rel="stylesheet" href="styles.css">
+    <!-- QR Code Generator & Scanner CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Iconos Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <!-- PANTALLA DE LOGIN -->
+    <div id="loginView" class="view" style="display:flex;">
+        <div class="glass-panel text-center">
+            <h1 class="text-gradient">COMEDOR UPTBAL</h1>
+            <p style="color:var(--text-muted); margin-bottom: 30px;">Sistema de Gestión Biométrica</p>
+            
+            <form id="login-form">
+                <div class="form-group text-left" style="text-align:left;">
+                    <label>Usuario</label>
+                    <input type="text" id="username" class="form-control" autocomplete="off" required placeholder="admin o cocina">
+                </div>
+                <div class="form-group text-left" style="text-align:left;">
+                    <label>Contraseña</label>
+                    <input type="password" id="password" class="form-control" required placeholder="123">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top:20px;">
+                    Ingresar <i data-lucide="log-in" style="width:18px;height:18px;"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- APLICACIÓN PRINCIPAL -->
+    <div id="app-container" style="display:none; width:100%;">
+        
+        <!-- SIDEBAR -->
+        <nav class="navbar">
+            <div class="navbar-brand text-gradient">UPTBAL</div>
+            
+            <div style="margin-bottom: 20px; font-size:0.9rem;">
+                Hola, <span id="current-user-name" style="color:var(--secondary); font-weight:bold;">Usuario</span>
+            </div>
+
+            <div class="nav-links">
+                <div class="nav-item admin-only active" data-target="dashboardAdmin">
+                    <i data-lucide="layout-dashboard"></i> Inicio
+                </div>
+                <div class="nav-item" data-target="dashboardCook" style="display:none;">
+                    <i data-lucide="layout-dashboard"></i> Estado Hoy
+                </div>
+                <div class="nav-item" data-target="scanner">
+                    <i data-lucide="scan-line"></i> Escáner QR
+                </div>
+                <div class="nav-item admin-only" data-target="diners">
+                    <i data-lucide="users"></i> Comensales
+                </div>
+                <div class="nav-item admin-only" data-target="reports">
+                    <i data-lucide="pie-chart"></i> Reportes
+                </div>
+            </div>
+
+            <div style="margin-top:auto;">
+                <button id="logout-btn" class="btn btn-secondary w-100" style="width:100%; justify-content:flex-start;">
+                    <i data-lucide="log-out"></i> Salir
+                </button>
+            </div>
+        </nav>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="main-content">
+
+            <!-- DASHBOARD ADMIN -->
+            <div id="dashboardAdmin" class="view">
+                <h2>Panel de Administración</h2>
+                <div class="dashboard-grid">
+                    <div class="glass-panel stat-card">
+                        <h3>Comensales Registrados</h3>
+                        <div class="value" id="stat-total-diners">0</div>
+                    </div>
+                    <div class="glass-panel stat-card">
+                        <h3>Asistencias Hoy</h3>
+                        <div class="value" id="stat-today-attendance">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DASHBOARD COCINA -->
+            <div id="dashboardCook" class="view">
+                <h2>Panel de Cocina</h2>
+                <p>Resumen del día en curso.</p>
+                <div class="dashboard-grid">
+                    <div class="glass-panel stat-card">
+                        <h3>Platos Servidos Hoy</h3>
+                        <div class="value text-gradient" id="cook-stat-today" style="font-size:4rem; text-align:center;">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ESCANER QR -->
+            <div id="scanner" class="view">
+                <h2>Registrar Asistencia (Escáner QR)</h2>
+                <div class="glass-panel text-center" style="padding: 20px; max-width:600px; margin-top:20px;">
+                    <div id="reader"></div>
+                    <div id="scan-result" style="min-height:40px; margin-top:20px; font-size:1.2rem;"></div>
+                </div>
+            </div>
+
+            <!-- GESTION COMENSALES -->
+            <div id="diners" class="view">
+                <div class="flex-between">
+                    <h2>Gestión de Comensales</h2>
+                </div>
+
+                <!-- Formulario Agregar -->
+                <div class="glass-panel mt-4" style="padding:20px;">
+                    <h3>Agregar Comensal</h3>
+                    <form id="add-diner-form" style="display:flex; gap:15px; align-items:flex-end; margin-top:15px; flex-wrap:wrap;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Cédula / ID</label>
+                            <input type="text" id="d-id" class="form-control" required style="width:150px;">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Nombres</label>
+                            <input type="text" id="d-name" class="form-control" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0; width:150px;">
+                            <label>Categoría</label>
+                            <select id="d-type" class="form-control" required>
+                                <option value="Estudiante">Estudiante</option>
+                                <option value="Cargo">Cargo Admin.</option>
+                                <option value="PNF">PNF Específico</option>
+                                <option value="Trayecto">Trayecto</option>
+                                <option value="Personal Obrero">Personal Obrero</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Info Adicional</label>
+                            <input type="text" id="d-info" class="form-control" placeholder="Ej. Informática T1">
+                        </div>
+                        <button class="btn btn-primary">Guardar</button>
+                    </form>
+                </div>
+
+                <!-- Tabla Comensales -->
+                <div class="glass-panel mt-4" style="padding:20px; overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Cédula</th>
+                                <th>Nombre</th>
+                                <th>Categoría</th>
+                                <th>Info</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="diners-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- REPORTES -->
+            <div id="reports" class="view">
+                <h2>Generación de Reportes</h2>
+                <div class="glass-panel mt-4" style="padding:20px;">
+                    <canvas id="reportsChart" style="max-height: 400px;"></canvas>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Modal QR -->
+    <div id="qr-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:999;">
+        <div class="glass-panel text-center" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); padding:40px; background:white; color:black;">
+            <div id="qr-modal-content"></div>
+            <button onclick="closeModal()" class="btn btn-secondary mt-4" style="color:black;border-color:black;">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script src="store.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Inicializar iconos
+        lucide.createIcons();
+    </script>
+</body>
+</html>
